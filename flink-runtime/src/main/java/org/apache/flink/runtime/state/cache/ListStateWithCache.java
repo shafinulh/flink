@@ -217,10 +217,18 @@ public class ListStateWithCache<K, N, V> implements InternalListState<K, N, V>, 
     private void removalCallback(K keyToRemove, List<V> value) {
         keyedStateBackend.setCurrentKey(keyToRemove);
         try {
+            if (value == null) {
+                value = new ArrayList<>();
+            }
             state.update(value);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        // try {
+        //     state.update(value);
+        // } catch (Exception e) {
+        //     throw new RuntimeException(e);
+        // }
     }
 
     @Override

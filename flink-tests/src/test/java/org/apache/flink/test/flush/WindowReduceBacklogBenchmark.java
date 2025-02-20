@@ -37,6 +37,7 @@ import java.time.Duration;
 
 import static org.apache.flink.configuration.ExecutionOptions.RUNTIME_MODE;
 import static org.apache.flink.configuration.StateBackendOptions.STATE_BACKEND;
+import static org.apache.flink.configuration.StateBackendOptions.STATE_BACKEND_CACHE_SIZE;
 
 /** HybridSourceBacklogExample. */
 public class WindowReduceBacklogBenchmark {
@@ -54,7 +55,7 @@ public class WindowReduceBacklogBenchmark {
             config.set(RUNTIME_MODE, RuntimeExecutionMode.BATCH);
         } else if (enableBacklog) {
 //            config.set(CHECKPOINTING_INTERVAL_DURING_BACKLOG, Duration.ZERO);
-//            config.set(STATE_BACKEND_CA CHE_SIZE, 1);
+           config.set(STATE_BACKEND_CACHE_SIZE, 10);
         }
 
         final StreamExecutionEnvironment env =

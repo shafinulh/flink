@@ -91,6 +91,9 @@ public class ValueStateWithCache<K, N, V> implements ValueState<V>, StateWithCac
         // TODO: verify this when max concurrent checkpoint > 1
         Preconditions.checkState(currentlyReferencingCheckpointID == NO_CHECKPOINT_ID);
         currentlyReferencingCheckpointID = checkpointId;
+
+        LinkedHashMapLRUCache<K, V> snapshotCache = lruCache.clone();
+
         return () -> {
             keyedStateBackendForCache.applyToAllKeys(
                     namespace,
@@ -98,7 +101,11 @@ public class ValueStateWithCache<K, N, V> implements ValueState<V>, StateWithCac
                     cacheStateDescriptor,
                     (key, state) -> state.clear()
             );
-            for (Map.Entry<K, V> entry: lruCache.entrySet()) {
+            // for (Map.Entry<K, V> entry: lruCache.entrySet()) {
+            //     keyedStateBackendForCache.setCurrentKey(entry.getKey());
+            //     stateForCache.update(entry.getValue());
+            // }
+            for (Map.Entry<K, V> entry : snapshotCache.entrySet()) {
                 keyedStateBackendForCache.setCurrentKey(entry.getKey());
                 stateForCache.update(entry.getValue());
             }
