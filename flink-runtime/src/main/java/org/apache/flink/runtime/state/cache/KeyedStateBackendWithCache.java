@@ -1,6 +1,7 @@
 package org.apache.flink.runtime.state.cache;
 
 import org.apache.flink.api.common.state.ListStateDescriptor;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.State;
 import org.apache.flink.api.common.state.StateDescriptor;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -136,6 +137,14 @@ public class KeyedStateBackendWithCache<K>
                     backendForCache,
                     keySize
             );
+        } else if (stateDescriptor instanceof MapStateDescriptor) {
+            result = MapStateWithCache.getOrCreateKeyedState(
+                    namespaceSerializer,
+                    (MapStateDescriptor) stateDescriptor,
+                    backend,
+                    backendForCache,
+                    keySize
+            );
         } else {
             throw new UnsupportedOperationException(stateDescriptor.getClass().getCanonicalName());
         }
@@ -168,6 +177,15 @@ public class KeyedStateBackendWithCache<K>
                     namespace,
                     namespaceSerializer,
                     (ListStateDescriptor) stateDescriptor,
+                    backend,
+                    backendForCache,
+                    keySize
+            );
+        } else if (stateDescriptor instanceof MapStateDescriptor) {
+            result = MapStateWithCache.getPartitionedState(
+                    namespace,
+                    namespaceSerializer,
+                    (MapStateDescriptor) stateDescriptor,
                     backend,
                     backendForCache,
                     keySize
