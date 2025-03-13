@@ -25,7 +25,7 @@ import static org.apache.flink.configuration.StateBackendOptions.STATE_BACKEND;
 import static org.apache.flink.configuration.StateBackendOptions.STATE_BACKEND_CACHE_SIZE;
 
 /**
- * Simple test for MapStateWithCache that validates basic functionality and cache behavior.
+ * test for MapStateWithCache that validates basic functionality and cache behavior.
  *
  * This test verifies:
  * 1. Basic operations (put, get, contains) work as expected
