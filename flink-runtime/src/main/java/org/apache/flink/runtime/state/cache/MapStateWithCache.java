@@ -189,9 +189,10 @@ public class MapStateWithCache<K, N, UK, UV> implements InternalMapState<K, N, U
         Preconditions.checkState(currentlyReferencingCheckpointID == NO_CHECKPOINT_ID);
         currentlyReferencingCheckpointID = checkpointId;
         
-        // No need to clone here - we'll use the main lruCache
-        // The mutation methods will clone it if needed when modifications happen
-        
+        LinkedHashMapLRUCache<K, Map<UK, UV>> snapshotCache = lruCache.clone();
+        // final LinkedHashMapLRUCache<K, Map<UK, UV>> snapshotCache = 
+        //     lruCache.isEmpty() ? lruCache : lruCache.clone();
+
         return () -> {
             keyedStateBackendForCache.applyToAllKeys(
                     namespace,
@@ -199,7 +200,7 @@ public class MapStateWithCache<K, N, UK, UV> implements InternalMapState<K, N, U
                     cacheStateDescriptor,
                     (key, state) -> state.clear()
             );
-            for (Map.Entry<K, Map<UK, UV>> entry : lruCache.entrySet()) {
+            for (Map.Entry<K, Map<UK, UV>> entry : snapshotCache.entrySet()) {
                 if (entry.getValue() != null && !entry.getValue().isEmpty()) {
                     keyedStateBackendForCache.setCurrentKey(entry.getKey());
                     stateForCache.putAll(entry.getValue());

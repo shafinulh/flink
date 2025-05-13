@@ -150,6 +150,9 @@ public class ListStateWithCache<K, N, V> implements InternalListState<K, N, V>, 
         // TODO: verify this when max concurrent checkpoint > 1
         Preconditions.checkState(currentlyReferencingCheckpointID == NO_CHECKPOINT_ID);
         currentlyReferencingCheckpointID = checkpointId;
+
+        LinkedHashMapLRUCache<K, List<V>> snapshotCache = lruCache.clone();
+
         return () -> {
             keyedStateBackendForCache.applyToAllKeys(
                     namespace,
@@ -157,7 +160,7 @@ public class ListStateWithCache<K, N, V> implements InternalListState<K, N, V>, 
                     cacheStateDescriptor,
                     (key, state) -> state.clear()
             );
-            for (Map.Entry<K, List<V>> entry: lruCache.entrySet()) {
+            for (Map.Entry<K, List<V>> entry: snapshotCache.entrySet()) {
                 keyedStateBackendForCache.setCurrentKey(entry.getKey());
                 stateForCache.update(entry.getValue());
             }
