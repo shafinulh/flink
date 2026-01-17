@@ -269,6 +269,34 @@ public class RocksDBConfigurableOptions implements Serializable {
                             "The amount of the cache for data blocks in RocksDB. "
                                     + "The default block-cache size is '8MB'.");
 
+    public static final ConfigOption<Boolean> BLOCK_CACHE_TRACE_ENABLED =
+            key("state.backend.rocksdb.block-cache-trace.enabled")
+                    .booleanType()
+                    .defaultValue(false)
+                    .withDescription(
+                            "Enables RocksDB block cache tracing so every cache hit/miss is recorded for offline analysis.");
+
+    public static final ConfigOption<String> BLOCK_CACHE_TRACE_DIR =
+            key("state.backend.rocksdb.block-cache-trace.dir")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription(
+                            "Optional directory for RocksDB block cache trace files. If unset, traces are stored inside each backend's local RocksDB directory.");
+
+    public static final ConfigOption<MemorySize> BLOCK_CACHE_TRACE_MAX_FILE_SIZE =
+            key("state.backend.rocksdb.block-cache-trace.max-file-size")
+                    .memoryType()
+                    .defaultValue(MemorySize.parse("1gb"))
+                    .withDescription(
+                            "Maximum size of a single RocksDB block cache trace file. Tracing stops once the file exceeds this size.");
+
+    public static final ConfigOption<Boolean> BLOCK_CACHE_TRACE_SYNC_FILE =
+            key("state.backend.rocksdb.block-cache-trace.sync-file")
+                    .booleanType()
+                    .defaultValue(false)
+                    .withDescription(
+                            "If true, fsync the block cache trace file after every write to minimize data loss at the cost of higher overhead.");
+
     public static final ConfigOption<MemorySize> WRITE_BATCH_SIZE =
             key("state.backend.rocksdb.write-batch-size")
                     .memoryType()

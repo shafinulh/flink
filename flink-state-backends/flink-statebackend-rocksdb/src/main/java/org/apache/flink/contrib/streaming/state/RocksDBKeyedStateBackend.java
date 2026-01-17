@@ -265,6 +265,7 @@ public class RocksDBKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
     private final RocksDbTtlCompactFiltersManager ttlCompactFiltersManager;
 
     @Nullable private final CompletableFuture<Void> asyncCompactAfterRestoreFuture;
+    @Nullable private final RocksDBBlockCacheTraceController blockCacheTraceController;
 
     public RocksDBKeyedStateBackend(
             ClassLoader userCodeClassLoader,
@@ -293,7 +294,8 @@ public class RocksDBKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
             InternalKeyContext<K> keyContext,
             @Nonnegative long writeBatchSize,
             @Nullable CompletableFuture<Void> asyncCompactFuture,
-            RocksDBManualCompactionManager rocksDBManualCompactionManager) {
+            RocksDBManualCompactionManager rocksDBManualCompactionManager,
+            @Nullable RocksDBBlockCacheTraceController blockCacheTraceController) {
 
         super(
                 kvStateRegistry,
@@ -331,6 +333,7 @@ public class RocksDBKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
         this.sharedRocksKeyBuilder = sharedRocksKeyBuilder;
         this.priorityQueueFactory = priorityQueueFactory;
         this.asyncCompactAfterRestoreFuture = asyncCompactFuture;
+        this.blockCacheTraceController = blockCacheTraceController;
         if (priorityQueueFactory instanceof HeapPriorityQueueSetFactory) {
             this.heapPriorityQueuesManager =
                     new HeapPriorityQueuesManager(
@@ -475,6 +478,7 @@ public class RocksDBKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
             if (nativeMetricMonitor != null) {
                 nativeMetricMonitor.close();
             }
+            IOUtils.closeQuietly(blockCacheTraceController);
 
             List<ColumnFamilyOptions> columnFamilyOptions =
                     new ArrayList<>(kvStateInformation.values().size());

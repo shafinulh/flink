@@ -20,6 +20,8 @@ package org.apache.flink.contrib.streaming.state;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.common.TaskInfo;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.contrib.streaming.state.restore.RocksDBFullRestoreOperation;
 import org.apache.flink.contrib.streaming.state.restore.RocksDBHeapTimersFullRestoreOperation;
@@ -66,6 +68,7 @@ import org.rocksdb.DBOptions;
 import org.rocksdb.RocksDB;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -145,6 +148,10 @@ public class RocksDBKeyedStateBackendBuilder<K> extends AbstractKeyedStateBacken
     private RocksDBManualCompactionConfig manualCompactionConfig =
             RocksDBManualCompactionConfig.getDefault();
     private ExecutorService ioExecutor;
+    private RocksDBBlockCacheTraceOptions blockCacheTraceOptions =
+            RocksDBBlockCacheTraceOptions.disabled();
+    @Nullable private JobID jobId;
+    @Nullable private TaskInfo taskInfo;
 
     public RocksDBKeyedStateBackendBuilder(
             String operatorIdentifier,
@@ -310,6 +317,22 @@ public class RocksDBKeyedStateBackendBuilder<K> extends AbstractKeyedStateBacken
         return this;
     }
 
+    RocksDBKeyedStateBackendBuilder<K> setBlockCacheTraceOptions(
+            RocksDBBlockCacheTraceOptions options) {
+        this.blockCacheTraceOptions = Preconditions.checkNotNull(options);
+        return this;
+    }
+
+    RocksDBKeyedStateBackendBuilder<K> setJobId(@Nullable JobID jobId) {
+        this.jobId = jobId;
+        return this;
+    }
+
+    RocksDBKeyedStateBackendBuilder<K> setTaskInfo(@Nullable TaskInfo taskInfo) {
+        this.taskInfo = taskInfo;
+        return this;
+    }
+
     public static File getInstanceRocksDBPath(File instanceBasePath) {
         return new File(instanceBasePath, DB_INSTANCE_DIR_STRING);
     }
@@ -350,6 +373,7 @@ public class RocksDBKeyedStateBackendBuilder<K> extends AbstractKeyedStateBacken
                 CompositeKeySerializationUtils.computeRequiredBytesInKeyGroupPrefix(
                         numberOfKeyGroups);
         RocksDBManualCompactionManager manualCompactionManager;
+        RocksDBBlockCacheTraceController traceController = null;
 
         try {
             // Variables for snapshot strategy when incremental checkpoint is enabled
@@ -413,6 +437,15 @@ public class RocksDBKeyedStateBackendBuilder<K> extends AbstractKeyedStateBacken
             // init priority queue factory
             manualCompactionManager =
                     RocksDBManualCompactionManager.create(db, manualCompactionConfig, ioExecutor);
+            traceController =
+                    RocksDBBlockCacheTraceController.startTracing(
+                            db,
+                            blockCacheTraceOptions,
+                            operatorIdentifier,
+                            taskInfo,
+                            instanceBasePath,
+                            keyGroupRange,
+                            jobId);
             priorityQueueFactory =
                     initPriorityQueueFactory(
                             keyGroupPrefixBytes,
@@ -431,6 +464,7 @@ public class RocksDBKeyedStateBackendBuilder<K> extends AbstractKeyedStateBacken
                     columnFamilyOptions, defaultColumnFamilyHandle);
             IOUtils.closeQuietly(defaultColumnFamilyHandle);
             IOUtils.closeQuietly(nativeMetricMonitor);
+            IOUtils.closeQuietly(traceController);
             for (RocksDBKeyedStateBackend.RocksDbKvStateInfo kvStateInfo :
                     kvStateInformation.values()) {
                 RocksDBOperationUtils.addColumnFamilyOptionsToCloseLater(
@@ -489,7 +523,8 @@ public class RocksDBKeyedStateBackendBuilder<K> extends AbstractKeyedStateBacken
                 keyContext,
                 writeBatchSize,
                 asyncCompactAfterRestoreFuture,
-                manualCompactionManager);
+                manualCompactionManager,
+                traceController);
     }
 
     private RocksDBRestoreOperation getRocksDBRestoreOperation(

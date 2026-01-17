@@ -150,6 +150,9 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
     /** The default rocksdb property-based metrics options. */
     private final RocksDBNativeMetricOptions nativeMetricOptions;
 
+    /** Configuration that controls block cache tracing. */
+    private final RocksDBBlockCacheTraceOptions blockCacheTraceOptions;
+
     // -- runtime values, set on TaskManager when initializing / using the backend
 
     /** Base paths for RocksDB directory, as initialized. */
@@ -232,6 +235,7 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
         this.incrementalRestoreAsyncCompactAfterRescale = TernaryBoolean.UNDEFINED;
         this.rescalingUseDeleteFilesInRange = TernaryBoolean.UNDEFINED;
         this.manualCompactionConfig = null;
+        this.blockCacheTraceOptions = RocksDBBlockCacheTraceOptions.disabled();
     }
 
     /**
@@ -348,6 +352,8 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
                 original.manualCompactionConfig != null
                         ? original.manualCompactionConfig
                         : RocksDBManualCompactionConfig.from(config);
+
+        this.blockCacheTraceOptions = RocksDBBlockCacheTraceOptions.fromConfig(config);
     }
 
     // ------------------------------------------------------------------------
@@ -512,6 +518,9 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
                                 parameters.getStateHandles(),
                                 keyGroupCompressionDecorator,
                                 parameters.getCancelStreamRegistry())
+                        .setBlockCacheTraceOptions(blockCacheTraceOptions)
+                        .setJobId(jobId)
+                        .setTaskInfo(env.getTaskInfo())
                         .setEnableIncrementalCheckpointing(isIncrementalCheckpointsEnabled())
                         .setNumberOfTransferingThreads(getNumberOfTransferThreads())
                         .setNativeMetricOptions(

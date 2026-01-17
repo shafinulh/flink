@@ -86,25 +86,27 @@ public final class RocksDBTestUtils {
         final RocksDBResourceContainer optionsContainer = new RocksDBResourceContainer();
 
         return new RocksDBKeyedStateBackendBuilder<>(
-                "no-op",
-                ClassLoader.getSystemClassLoader(),
-                instanceBasePath,
-                optionsContainer,
-                stateName -> optionsContainer.getColumnOptions(),
-                new KvStateRegistry().createTaskRegistry(new JobID(), new JobVertexID()),
-                keySerializer,
-                numKeyGroups,
-                keyGroupRange,
-                new ExecutionConfig(),
-                TestLocalRecoveryConfig.disabled(),
-                RocksDBPriorityQueueConfig.buildWithPriorityQueueType(queueStateType),
-                TtlTimeProvider.DEFAULT,
-                LatencyTrackingStateConfig.disabled(),
-                new UnregisteredMetricsGroup(),
-                (key, value) -> {},
-                stateHandles,
-                UncompressedStreamCompressionDecorator.INSTANCE,
-                new CloseableRegistry());
+                        "no-op",
+                        ClassLoader.getSystemClassLoader(),
+                        instanceBasePath,
+                        optionsContainer,
+                        stateName -> optionsContainer.getColumnOptions(),
+                        new KvStateRegistry().createTaskRegistry(new JobID(), new JobVertexID()),
+                        keySerializer,
+                        numKeyGroups,
+                        keyGroupRange,
+                        new ExecutionConfig(),
+                        TestLocalRecoveryConfig.disabled(),
+                        RocksDBPriorityQueueConfig.buildWithPriorityQueueType(queueStateType),
+                        TtlTimeProvider.DEFAULT,
+                        LatencyTrackingStateConfig.disabled(),
+                        new UnregisteredMetricsGroup(),
+                        (key, value) -> {},
+                        stateHandles,
+                        UncompressedStreamCompressionDecorator.INSTANCE,
+                        new CloseableRegistry())
+                .setBlockCacheTraceOptions(RocksDBBlockCacheTraceOptions.disabled())
+                .setJobId(new JobID());
     }
 
     public static <K> RocksDBKeyedStateBackendBuilder<K> builderForTestDB(
@@ -117,27 +119,29 @@ public final class RocksDBTestUtils {
         final RocksDBResourceContainer optionsContainer = new RocksDBResourceContainer();
 
         return new RocksDBKeyedStateBackendBuilder<>(
-                "no-op",
-                ClassLoader.getSystemClassLoader(),
-                instanceBasePath,
-                optionsContainer,
-                stateName -> columnFamilyOptions,
-                new KvStateRegistry().createTaskRegistry(new JobID(), new JobVertexID()),
-                keySerializer,
-                2,
-                new KeyGroupRange(0, 1),
-                new ExecutionConfig(),
-                TestLocalRecoveryConfig.disabled(),
-                RocksDBPriorityQueueConfig.buildWithPriorityQueueType(
-                        EmbeddedRocksDBStateBackend.PriorityQueueStateType.HEAP),
-                TtlTimeProvider.DEFAULT,
-                LatencyTrackingStateConfig.disabled(),
-                new UnregisteredMetricsGroup(),
-                Collections.emptyList(),
-                UncompressedStreamCompressionDecorator.INSTANCE,
-                db,
-                defaultCFHandle,
-                new CloseableRegistry());
+                        "no-op",
+                        ClassLoader.getSystemClassLoader(),
+                        instanceBasePath,
+                        optionsContainer,
+                        stateName -> columnFamilyOptions,
+                        new KvStateRegistry().createTaskRegistry(new JobID(), new JobVertexID()),
+                        keySerializer,
+                        2,
+                        new KeyGroupRange(0, 1),
+                        new ExecutionConfig(),
+                        TestLocalRecoveryConfig.disabled(),
+                        RocksDBPriorityQueueConfig.buildWithPriorityQueueType(
+                                EmbeddedRocksDBStateBackend.PriorityQueueStateType.HEAP),
+                        TtlTimeProvider.DEFAULT,
+                        LatencyTrackingStateConfig.disabled(),
+                        new UnregisteredMetricsGroup(),
+                        Collections.emptyList(),
+                        UncompressedStreamCompressionDecorator.INSTANCE,
+                        db,
+                        defaultCFHandle,
+                        new CloseableRegistry())
+                .setBlockCacheTraceOptions(RocksDBBlockCacheTraceOptions.disabled())
+                .setJobId(new JobID());
     }
 
     public static <K> RocksDBKeyedStateBackend<K> createKeyedStateBackend(
